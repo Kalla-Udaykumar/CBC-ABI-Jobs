@@ -122,7 +122,7 @@ pipeline {
                 dir("${WORKSPACE}/abi/platform_management_services") {
                     script {
                         abi.shell("cp -r /build/tools/engsrv/tools/protexIP/* /OWR/Tools/protexIP-7.8.4")
-                      //  abi.shell("cp -r ${WORKSPACE}/abi/henosis/cac/adl/lin/eth.driver/idf ${WORKSPACE}/abi/ese_linux_next_next/drivers/net/ethernet/stmicro/")
+                      //  abi.shell("cp -r ${WORKSPACE}/abi_repo/NLM/IDF ${WORKSPACE}/abi/NLM")
                         BuildInfo.instance.data["Version"] = env.BuildVersion
 
                         def ctx
