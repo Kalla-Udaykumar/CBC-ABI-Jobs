@@ -40,7 +40,7 @@ pipeline {
     }
 
     stages {
-        stage('BDNAME CHANGE')  {
+        stage ('Build name') {
             steps {
                 script {
                     currentBuild.displayName = "CBC_NLM_ABI-${BUILD_NUMBER}"
@@ -91,6 +91,53 @@ pipeline {
                 extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'abi/abi_repo'],
                 [$class: 'ScmName', name: 'ose-repo'],
                 [$class: 'CleanBeforeCheckout']]])
+            }
+        }
+
+        stage('ABI') {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= '
+                    reuseNode true
+                }
+            }
+            steps {
+               script {
+                    abi.shell("cp -r ${WORKSPACE}/abi/abi_repo/IDF ${WORKSPACE}/abi")
+                    PrepareWS()
+                } 
+            }
+        }
+
+        stage('QA: PROTEX') {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= '
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${WORKSPACE}/abi/platform_management_services") {
+                    script {
+                        abi.shell("cp -r /build/tools/engsrv/tools/protexIP/* /OWR/Tools/protexIP-7.8.4")
+                      //  abi.shell("cp -r ${WORKSPACE}/abi/henosis/cac/adl/lin/eth.driver/idf ${WORKSPACE}/abi/ese_linux_next_next/drivers/net/ethernet/stmicro/")
+                        BuildInfo.instance.data["Version"] = env.BuildVersion
+
+                        def ctx
+                        ctx = abi_get_current_context()
+                        ctx['IngredientPath'] = "abi/NLM"
+                        abi_set_current_context(ctx)
+
+                        abi_scan_ip()
+
+                        ctx = abi_get_current_context()
+                        ctx['IngredientPath'] = "abi"
+                        abi_set_current_context(ctx)
+                    }
+                    sh "cp -R ${WORKSPACE}/abi/NLM/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
+                }
             }
         }
     }
