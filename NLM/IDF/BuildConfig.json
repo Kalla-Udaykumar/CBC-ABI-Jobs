@@ -1,0 +1,64 @@
+{
+    "IngredientName": "cbc-nlm",
+    "Description": "IDF ABI Project Config File for CBC NLM Ingredient",
+    "OutputConfiguration": "IDF/PackageGen.json",
+    "OutputRoot": "OWRBin",
+    "OutputDir": "OWRBuild",
+    "PackageRoot": "OWRPackage",
+    "PackageMetadataTemplate": "IDF/PackageMetadataTemplate.json",
+    "BuildInfo":{
+        "Name":"Test_setup",
+        "FullName":"",
+        "SDL": [
+            {
+                "ID": "",
+                "URL": "",
+                "Submitter": "lab_bldmstr"
+            }
+        ],
+        "ServerURL":"https://onebkc.intel.com",
+        "Type":"onebkc"
+    },
+   /* "VulnerabilityScan": {
+        "ServerURL": "https://snyk.devtools.intel.com/api"
+    },*/
+    "Protex": {
+        "Server": "amrprotex004.devtools.intel.com",
+        "ProjectID": "c_nodelifecyclemanager_23821"
+    },
+   /* "BinaryScan": {
+        "ServerURL": "https://bdba001.icloud.intel.com",
+        "ServerGroup": "52"
+    },*/
+   /* "StaticSecurityScan": {
+        "ServerURL": "https://sast.intel.com",
+        "ProjectID": "336687",
+        "IsPublic": true
+    },*/
+   /* "Klocwork": {
+        "ServerURL": "https://klocwork-png7.devtools.intel.com",
+        "ServerPort": "8105",
+        "LicenseHost": "klocwork05p.elic.intel.com",
+        "LicensePort": "7500",
+        "Project": "KMB-LIN-PMS",
+        "OutputConfiguration": "",
+        "OnErrorContinueAnalysis":true,
+        "OverWriteDuplicates": true
+    },*/
+    "SubComponents": [
+        {
+            "Name": "cbc-nlm",
+            "Description": "CBC NLM Script App",
+            "ProjectFile": "./build.sh",
+            "ProjectType": "Script",
+            "WorkingDirectory": "IDF",
+            "AdditionalFlags": "",
+            "AdditionalEnvVars": "",
+            "Klocwork":{
+                "Project":"KMB-LIN-PMS",
+                "Type":"cpp"
+            }
+        }
+    ],    
+    "SchemaVersion": "1.0"
+}
