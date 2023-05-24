@@ -1,0 +1,162 @@
+#!groovy
+@Library('abi@2.5.0') _
+
+import owm.common.BuildInfo
+Map buildinfo = BuildInfo.instance.data
+
+email_receipients = 'udaykumarx.kalla@intel.com'
+subject = '$DEFAULT_SUBJECT'
+body = '${SCRIPT, template="managed:abi.html"}'
+
+pipeline {
+  agent {
+        node {
+            label 'BSP-DOCKER19-SLES12'
+        }
+    }
+    
+    environment {
+        DATETIME = new Date().format("yyyyMMdd-HHmm");
+      //  YEAR = new Date().format("yyyy")
+       // WW = new Date().format("ww")
+        BDSERVER='https://amrprotex004.devtools.intel.com'
+      //  WORKSPACE_LIN="/build/cje/workspace/${JOB_BASE_NAME}"
+        BuildVersion = "1.0.000"
+        ABI_CONTAINER = "FALSE"
+        DOCKER = "amr-registry.caas.intel.com/esc-devops/plat/adln/oa/abi/ubuntu20.04:2023406_1222"
+        TMPDIR = "/OWR/Tools/tmp"
+        JOB_TYPE = "prod"
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '90', artifactDaysToKeepStr: '30'))
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        booleanParam(name: 'CLEAN', defaultValue: true, description: 'Clean workspace')      
+    }
+
+    stages {
+        stage ('Build name') {
+            steps {
+                script {
+                    currentBuild.displayName = "CBC_SMS_ABI-${BUILD_NUMBER}"
+                }
+            }
+        }
+
+        stage ('CLEAN') {
+            when {
+                expression { params.CLEAN == true }
+            }
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('SCM:PRE') {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= -e PATH=/home/lab_bldmstr/bin:$PATH -v /nfs/png/home/lab_bldmstr/docker:/home/lab_bldmstr/.ssh -v /nfs/png/home/lab_bldmstr/bin:/home/lab_bldmstr/bin -v /nfs/png/home/lab_bldmstr/.gitconfig:/home/lab_bldmstr/.gitconfig -v /nfs/png/home/lab_bldmstr/.git-credentials:/home/lab_bldmstr/.git-credentials -v /nfs/png/disks/ecg_es_disk2:/build/tools'
+                    reuseNode true
+                }
+            }
+            steps {
+
+                checkout changelog: false, scm: ([$class: 'GitSCM',
+                userRemoteConfigs: [[credentialsId: 'GitHub-Token', url: 'https://github.com/intel-innersource/libraries.devops.henosis.build.automation.services.git']],
+                branches: [[name: 'refs/heads/master']],
+                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'abi/esc-engservices'],
+                [$class: 'ScmName', name: 'esc-engservices'],
+                [$class: 'CloneOption', timeout: 60],
+                [$class: 'CleanBeforeCheckout'], 
+                [$class: 'CheckoutOption', timeout: 60]]])
+
+                checkout changelog: false, scm: ([$class: 'GitSCM',
+                userRemoteConfigs: [[credentialsId: 'GitHub-Token', url: 'https://github.com/intel-innersource/frameworks.edge.one-intel-edge.cbc.sms.git']],
+                branches: [[name: 'refs/heads/main']],
+                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'abi/sms'],
+                [$class: 'ScmName', name: 'code-repo'],
+                [$class: 'CloneOption', timeout: 60],
+                [$class: 'CleanBeforeCheckout'], 
+                [$class: 'CheckoutOption', timeout: 60]]])
+
+                checkout([$class: 'GitSCM',
+                userRemoteConfigs: [[credentialsId: 'GitHub-Token', url: 'https://github.com/Kalla-Udaykumar/CBC-ABI-Jobs.git']],
+                branches: [[name: 'refs/heads/master']],
+                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'abi/abi_repo'],
+                [$class: 'ScmName', name: 'ose-repo'],
+                [$class: 'CleanBeforeCheckout']]])
+            }
+        }
+
+        stage('ABI') {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= '
+                    reuseNode true
+                }
+            }
+            steps {
+               script {
+                    abi.shell("cp -r ${WORKSPACE}/abi/abi_repo/SMS/IDF ${WORKSPACE}/abi")
+                    PrepareWS()
+                } 
+            }
+        }
+    //  abi.shell("cp -r ${WORKSPACE}/abi/abi_repo/SMS/IDF ${WORKSPACE}/abi/sms")
+        stage('QA: PROTEX') {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= -v /nfs/png/disks/ecg_es_disk2:/build/Tools'
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${WORKSPACE}") {
+                    script {
+                        abi.shell("cp -r /build/Tools/engsrv/tools/protexIP/* /OWR/Tools/protexIP-7.8.4")
+                        BuildInfo.instance.data["Version"] = env.BuildVersion
+
+                        def ctx
+                        ctx = abi_get_current_context()
+                        ctx['IngredientPath'] = "abi/sms"
+                        abi_set_current_context(ctx)
+
+                        abi_scan_ip()
+
+                        ctx1 = abi_get_current_context()
+                        ctx1['IngredientPath'] = "abi"
+                        abi_set_current_context(ctx1)
+                    }
+                    // sh "cp -R ${WORKSPACE}/abi/sms/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
+                }
+            }
+        }
+    }
+}
+
+
+
+void PrepareWS(String BuildConfig="IDF/BuildConfig.json") {
+    log.Debug("Enter")
+
+    log.Info("This build is running on Node:${env.NODE_NAME} WorkSpace: ${env.WORKSPACE}")
+
+    abi_setup_proxy()
+    
+    abi_init config: BuildConfig, ingPath: "abi", checkoutPath: "abi", skipCheckout: true
+
+    def ctx
+    ctx = abi_get_current_context()
+    ctx['IngredientVersion'] = env.BuildVersion
+    abi_set_current_context(ctx)
+
+    log.Debug("Exit")
+}
