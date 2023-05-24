@@ -19,9 +19,9 @@
         "ServerURL":"https://onebkc.intel.com",
         "Type":"onebkc"
     },
-   /* "VulnerabilityScan": {
+    "VulnerabilityScan": {
         "ServerURL": "https://snyk.devtools.intel.com/api"
-    },*/
+    },
     "Protex": {
         "Server": "amrprotex004.devtools.intel.com",
         "ProjectID": "c_nodelifecyclemanager_23821"
