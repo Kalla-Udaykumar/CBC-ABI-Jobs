@@ -40,7 +40,7 @@ pipeline {
         stage ('Build name') {
             steps {
                 script {
-                    currentBuild.displayName = "CBC_NLM_ABI-${BUILD_NUMBER}"
+                    currentBuild.displayName = "CBC_NLM_BUILD-${BUILD_NUMBER}"
                 }
             }
         }
