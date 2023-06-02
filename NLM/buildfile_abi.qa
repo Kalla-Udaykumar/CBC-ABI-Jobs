@@ -17,6 +17,7 @@ pipeline {
     
     environment {
         DATETIME = new Date().format("yyyyMMdd-HHmm");
+        DATE = new Date().format("yyyyMMdd");
       //  YEAR = new Date().format("yyyy")
        // WW = new Date().format("ww")
         BDSERVER='https://amrprotex004.devtools.intel.com'
@@ -43,7 +44,7 @@ pipeline {
         stage ('Build name') {
             steps {
                 script {
-                    currentBuild.displayName = "CBC_NLM_ABI-${BUILD_NUMBER}"
+                    currentBuild.displayName = "CBC_NLM_QA-${BUILD_NUMBER}"
                 }
             }
         }
@@ -109,7 +110,6 @@ pipeline {
                 } 
             }
         }
-    //  abi.shell("cp -r ${WORKSPACE}/abi/abi_repo/NLM/IDF ${WORKSPACE}/abi/NLM")
         stage('QA: PROTEX') {
             agent {
                 docker {
@@ -135,10 +135,28 @@ pipeline {
                         ctx1['IngredientPath'] = "abi"
                         abi_set_current_context(ctx1)
                     }
-                    // sh "cp -R ${WORKSPACE}/abi/NLM/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
+                    sh "cp -R ${WORKSPACE}/abi/code-repo/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
                 }
             }
         }
+        
+        
+        stage ("Snyk") {
+            agent {
+                docker {
+                    image "${DOCKER}"
+                    args '--entrypoint= '
+                    reuseNode true
+                }
+            }
+            steps{
+                script {
+                    PrepareWS()
+                    abi_scan_vulnerability.scan_container(docker_registry: 'amr-registry.caas.intel.com', container_image: 'amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-nlm:latest', docker_cred: 'BuildAutomation', html_report: true, reportname: "CBC_NLM_SNYK")
+                }
+            }
+        }
+        
     }
 }
 
@@ -160,3 +178,42 @@ void PrepareWS(String BuildConfig="IDF/BuildConfig.json") {
 
     log.Debug("Exit")
 }
+
+
+
+// stage ("Snyk") {
+        //     agent {
+        //         docker {
+        //             image "${DOCKER}"
+        //             args '--entrypoint= '
+        //             reuseNode true
+        //         }
+        //     }
+        //     steps{
+        //         script {
+        //             permission()
+        //             PrepareWS()
+        //           // abi.shell("python3 -m venv .pyvenv")
+        //             //abi.shell("${WORKSPACE}/.pyvenv/bin/python --version")
+        //             //abi.shell("${WORKSPACE}/.pyvenv/bin/python -m pip install --upgrade pip")
+        //             //abi.shell("${WORKSPACE}/.pyvenv/bin/python -m pip install -r ${WORKSPACE}/abi/platform_management_services/python/requirements.txt")
+        //             //abi_scan_vulnerability python_executable: "${WORKSPACE}/.pyvenv/bin/python", manifest_file: "platform_management_services/python/requirements.txt", html_report: true, upload_result: true, org: 'iotg_aspe_pse', reportname: "KMB-LIN-PMS", include_components: true, project_group: "intel-innersource/applications.services.platform-management.platform-management-services.git", auditreport: true
+        //             abi_scan_vulnerability docker_executable: "${WORKSPACE}/abi/code-repo/Dockerfile" ,html_report: true, upload_result: true, org: 'iotg_aspe_pse', reportname: "CBC-LIN_NLM", include_components: true, project_group: "intel-innersource/frameworks.edge.one-intel-edge.cbc.nlm.git", auditreport: true
+        //         }
+        //     }
+        // }
+        
+        
+        // stage ("PRE_Snyk") {
+        //     steps  {
+        //         dir("${WORKSPACE}") {
+        //             sh"""
+        //             cd ${WORKSPACE}/abi/code-repo/ && \
+        //             docker build --build-arg http_proxy=http://proxy-dmz.intel.com:911 --build-arg https_proxy=http://proxy-dmz.intel.com:912 --build-arg no_proxy=127.0.0.1,localhost,intel.com -t nlm -f Dockerfile . && \
+        //             docker tag nlm:latest amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-nlm:"${DATE}" && \
+        //             docker push amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-nlm:"${DATE}
+        //             """
+        //         }
+        //     }
+        // }
+        // , docker_cred: 'OWR_CAAS'
