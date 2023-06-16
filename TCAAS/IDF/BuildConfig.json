@@ -24,7 +24,7 @@
     },
     "Protex": {
         "Server": "amrprotex004.devtools.intel.com",
-        "ProjectID": "c_securitymonitoringservice_23822"
+        "ProjectID": "c_trustcoordinationasaservicemicroservice_23830"
     },
    /* "BinaryScan": {
         "ServerURL": "https://bdba001.icloud.intel.com",
