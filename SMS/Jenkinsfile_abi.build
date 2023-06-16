@@ -74,7 +74,7 @@ pipeline {
             steps {
                 dir("${WORKSPACE}") {
                     sh"""
-                    cd ${WORKSPACE}/cve/src/ &&\
+                    cd ${WORKSPACE}/sms/ &&\
                     docker build --build-arg http_proxy=http://proxy-dmz.intel.com:911 --build-arg https_proxy=http://proxy-dmz.intel.com:912 --build-arg no_proxy=127.0.0.1,localhost,intel.com -t sms -f Dockerfile .
                     """
                 }
