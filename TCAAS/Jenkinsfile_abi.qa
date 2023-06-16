@@ -40,10 +40,10 @@ pipeline {
     }
 
     stages {
-        stage ('Build name') {
+        stage ('B_NAME') {
             steps {
                 script {
-                    currentBuild.displayName = "CBC_Tcaas_QA-${BUILD_NUMBER}"
+                    currentBuild.displayName = "CBC_TCaaS_QA-${BUILD_NUMBER}"
                 }
             }
         }
@@ -57,7 +57,7 @@ pipeline {
             }
         }
 
-        stage('SCM:PRE') {
+        stage('SCM') {
             agent {
                 docker {
                     image "${DOCKER}"
@@ -109,6 +109,20 @@ pipeline {
                 } 
             }
         }
+
+        stage('QA: BANDIT') {
+                        agent {
+                            docker {
+                                image "${DOCKER}"
+                                args '--entrypoint= '
+                                reuseNode true
+                            }
+                        }
+                        steps {
+                            //Enable Bandit scan with ABI
+                            abi_scan_bandit target: "abi/tcaas", reportname: "bandit_tcaas", auditreport: true
+                        }
+                    }  
 
         stage('QA: PROTEX') {
             agent {
