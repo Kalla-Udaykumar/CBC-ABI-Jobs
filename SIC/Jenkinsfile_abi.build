@@ -1,0 +1,82 @@
+pipeline {
+  agent {
+        node {
+            label 'BSP-DOCKER19-SLES12'
+        }
+    }
+    
+    environment {
+        DATETIME = new Date().format("yyyyMMdd-HHmm");
+        BDSERVER='https://amrprotex004.devtools.intel.com'
+        BuildVersion = "1.0.000"
+        ABI_CONTAINER = "FALSE"
+        DOCKER = "cbcsetup:0529"
+        TMPDIR = "/OWR/Tools/tmp"
+        JOB_TYPE = "prod"
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '90', artifactDaysToKeepStr: '30'))
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        booleanParam(name: 'CLEAN', defaultValue: true, description: 'Clean workspace')      
+    }
+
+    stages {
+        stage ('BUILD NAME') {
+            steps {
+                script {
+                    currentBuild.displayName = "CBC_SIC_BUILD-${BUILD_NUMBER}"
+                }
+            }
+        }
+ 
+        stage ('CLEAN') {
+            when {
+                expression { params.CLEAN == true }
+            }
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('SCM') {
+            steps {
+
+                checkout changelog: false, scm: ([$class: 'GitSCM',
+                userRemoteConfigs: [[credentialsId: 'GitHub-Token', url: 'https://github.com/intel-innersource/libraries.devops.henosis.build.automation.services.git']],
+                branches: [[name: 'refs/heads/master']],
+                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'esc-engservices'],
+                [$class: 'ScmName', name: 'esc-engservices'],
+                [$class: 'CloneOption', timeout: 60],
+                [$class: 'CleanBeforeCheckout'], 
+                [$class: 'CheckoutOption', timeout: 60]]])
+
+                checkout changelog: false, scm: ([$class: 'GitSCM',
+                userRemoteConfigs: [[credentialsId: 'GitHub-Token', url: 'https://github.com/intel-innersource/frameworks.edge.one-intel-edge.cbc.security-intents.git']],
+                branches: [[name: 'refs/heads/main']],
+                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'sic'],
+                [$class: 'ScmName', name: 'sms'],
+                [$class: 'CloneOption', timeout: 60],
+                [$class: 'CleanBeforeCheckout'], 
+                [$class: 'CheckoutOption', timeout: 60]]])
+
+            }
+        }
+
+        stage('BUILD') {
+            steps {
+                dir("${WORKSPACE}") {
+                    sh"""
+                    cd ${WORKSPACE}/sic/src/ &&\
+                    make docker build --build-arg http_proxy=http://proxy-dmz.intel.com:911 --build-arg https_proxy=http://proxy-dmz.intel.com:912 --build-arg no_proxy=127.0.0.1,localhost,intel.com -t sic -f Dockerfile .
+                    """
+                }
+            }
+        }
+    }
+}
