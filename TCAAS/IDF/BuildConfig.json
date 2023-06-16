@@ -30,11 +30,11 @@
         "ServerURL": "https://bdba001.icloud.intel.com",
         "ServerGroup": "52"
     },*/
-   /* "StaticSecurityScan": {
+    "StaticSecurityScan": {
         "ServerURL": "https://sast.intel.com",
         "ProjectID": "336687",
         "IsPublic": true
-    },*/
+    },
    /* "Klocwork": {
         "ServerURL": "https://klocwork-png7.devtools.intel.com",
         "ServerPort": "8105",
