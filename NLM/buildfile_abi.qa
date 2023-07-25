@@ -135,7 +135,7 @@ pipeline {
                         ctx1['IngredientPath'] = "abi"
                         abi_set_current_context(ctx1)
                     }
-                    sh "cp -R ${WORKSPACE}/abi/code-repo/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
+                    // sh "cp -R ${WORKSPACE}/abi/code-repo/OWRBin/Documents/Protex ${WORKSPACE}/abi/OWRBin/Documents/Protex"
                 }
             }
         }
