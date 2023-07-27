@@ -151,7 +151,7 @@ pipeline {
             steps{
                 script {
                     PrepareWS()
-                    abi_scan_vulnerability.scan_container(docker_registry: 'amr-registry.caas.intel.com', container_image: 'amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-sic:latest', docker_cred: 'BuildAutomation', html_report: true, reportname: "CBC_NLM_SNYK")
+                    abi_scan_vulnerability.scan_container(docker_registry: 'amr-registry.caas.intel.com', container_image: 'amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-sic:latest', docker_cred: 'BuildAutomation', html_report: true, reportname: "CBC_SIC_SNYK")
                 }
             }
         }
