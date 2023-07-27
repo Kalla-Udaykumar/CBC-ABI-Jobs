@@ -75,7 +75,7 @@ pipeline {
                     cd ${WORKSPACE}/sic/src/ &&\
                     echo “machine github.com login not-used password <>“ >>  $HOME/.netrc && \
                     docker build --secret id=netrc,src=${HOME}/.netrc --build-arg http_proxy=http://proxy-dmz.intel.com:911 --build-arg https_proxy=http://proxy-dmz.intel.com:912 --build-arg no_proxy=127.0.0.1,localhost,intel.com -t sic -f Dockerfile .
-                    sed '16d' ${HOME}/.netrc > ${HOME}/.netrc_sic && \
+                    head -n -1 ${HOME}/.netrc > ${HOME}/.netrc_sic && \
                     cp ${HOME}/.netrc_sic ${HOME}/.netrc && \
                     rm -f ${HOME}/.netrc_sic && \
                     docker tag sic:latest amr-registry.caas.intel.com/esc-devops/edge-cbc-client/cbc-sic:latest && \
